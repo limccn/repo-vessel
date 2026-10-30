@@ -1,0 +1,462 @@
+/* ==========================================================================
+   码之灵龛 · 全局基础
+   --------------------------------------------------------------------------
+   材质语言：石与金属。面板是石头（暗面 + 颗粒），描边是金属（金色浮雕），
+   页面是一层很淡的暗角。文字永远压在面板的表面上，颗粒只落在表面上，
+   不落在字上。
+   ========================================================================== */
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background-color: var(--color-bg-base);
+    color: var(--color-fg-primary);
+    font-family: var(--font-ui);
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+    /* 刘海屏：`viewport-fit=cover` 之后内容会伸进刘海与 Home 指示条。
+       安全区在没有刘海、没有圆角的设备上等于 0，所以这三行在桌面与
+       老设备上什么也不做。 */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* 页面暗角。落在整页，不落在面板上。 */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: var(--z-base);
+    background: radial-gradient(
+      130% 95% at 50% 0%,
+      transparent 38%,
+      rgb(0 0 0 / var(--layer-vignette)) 100%
+    );
+  }
+
+  /* 语言字形。「直」「骨」「說」在简体、繁体、日语里是三种写法：
+     换语言时字栈一起换，否则汉字会用简体字形画出来，日语读者一眼看出是外来字。 */
+  :lang(ja) body {
+    font-family: var(--font-ui-ja);
+  }
+
+  :lang(zh-Hant) body {
+    font-family: var(--font-ui-hant);
+  }
+
+  :lang(ja) .font-display,
+  :lang(ja) .display-cn,
+  :lang(ja) .display-caps {
+    font-family: var(--font-display-ja);
+  }
+
+  :lang(zh-Hant) .font-display,
+  :lang(zh-Hant) .display-cn,
+  :lang(zh-Hant) .display-caps {
+    font-family: var(--font-display-hant);
+  }
+
+  /* 日语按文节断行。默认的断行规则允许在片假名词中间断开 ——「リポ｜ジトリ」
+     在日文排版里是错的。`auto-phrase` 让浏览器按词组断；不支持它的浏览器
+     直接忽略这一行，退回原来的行为，不会更糟。 */
+  :lang(ja) body {
+    word-break: auto-phrase;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    margin: 0;
+    font-weight: 600;
+    line-height: var(--leading-snug);
+  }
+
+  p {
+    margin: 0;
+  }
+
+  a {
+    color: var(--color-teal);
+    text-decoration-color: var(--color-teal-faint);
+    text-underline-offset: 3px;
+    transition: color var(--motion-duration-fast) var(--ease-standard),
+      text-decoration-color var(--motion-duration-fast) var(--ease-standard);
+  }
+
+  a:hover {
+    color: var(--color-gold-bright);
+    text-decoration-color: var(--color-gold-soft);
+  }
+
+  button,
+  input,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  /* 焦点环：金色。它必须落在每一个可聚焦元素上，且不依赖任何自定义样式。 */
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
+
+  ::selection {
+    background: var(--color-gold-faint);
+    color: var(--color-fg-primary);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-surface-panel-raised) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: var(--color-surface-panel-raised);
+    border: 2px solid var(--color-bg-base);
+    border-radius: var(--radius-pill);
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer components {
+  /* ======================================================================
+     切角面板 —— Dota 的招牌几何
+     ----------------------------------------------------------------------
+     外层负责描边，内层负责填充，两者用同一条 clip-path。
+     切角处因此留下一个楔形的金属边，正是 Dota 面板的样子。
+     ====================================================================== */
+
+  .cut-frame {
+    --cut: var(--cut-md);
+    --frame-edge: var(--color-hairline);
+    --frame-fill: var(--color-surface-panel);
+    position: relative;
+    padding: 1px;
+    background: var(--frame-edge);
+    clip-path: polygon(
+      var(--cut) 0,
+      100% 0,
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      0 100%,
+      0 var(--cut)
+    );
+  }
+
+  .cut-frame__inner {
+    position: relative;
+    height: 100%;
+    background: var(--frame-fill);
+    /* 稀有 / 史诗：卡内的一圈内发光。普通等级没有 --rarity-glow，所以就是没有。 */
+    box-shadow: inset 0 0 var(--rarity-glow-blur, 0px) var(--rarity-glow, transparent);
+    clip-path: polygon(
+      var(--cut) 0,
+      100% 0,
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      0 100%,
+      0 var(--cut)
+    );
+  }
+
+  /* 传说：卡外的一圈金色辉光。
+     落在内层上 —— filter 落在外层会把焦点环一起裁掉（filter 会裁掉自己的滤镜区域）。 */
+  .cut-frame__inner--bloom {
+    filter: drop-shadow(
+      0 0 var(--rarity-bloom-blur, 0px) var(--rarity-legendary-glow, transparent)
+    );
+  }
+
+  /* 悬停：抬升 2px + 边缘发光加强。视觉系统 §7.3：「卡片悬停 → 上抬 2px +
+     边缘发光加强」—— 这是全系统的一条动效，所以规则挂在 `.motion-card-hover` 上，
+     而不是只挂在 `button` 上：仓库卡默认渲染成 `<article>`，只认按钮的话这条动效
+     永远不发生（原型里还没有任何卡片是按钮）。
+     抬升落在**内层**：外层承担描边与焦点环，焦点环留在原地不动。
+     这里用 `transform` 而不是 Tailwind 的 `translate-y` 工具类 —— 后者写的是
+     独立的 `translate` 属性，`transform: none` 压不住它，降级会失效。 */
+  .motion-card-hover .cut-frame__inner {
+    transition: transform var(--motion-duration-fast) var(--ease-standard);
+  }
+  .motion-card-hover:hover .cut-frame__inner {
+    transform: translateY(calc(-1 * var(--motion-lift-card)));
+    box-shadow: inset 0 0 calc(var(--rarity-glow-blur, 0px) * 1.6)
+      var(--rarity-glow, transparent);
+  }
+  .motion-card-hover:hover .cut-frame__inner--bloom {
+    filter: drop-shadow(
+      0 0 calc(var(--rarity-bloom-blur, 0px) * 1.6)
+        var(--rarity-legendary-glow, transparent)
+    );
+  }
+
+  /* 石面颗粒。只落在面板表面上，而且永远压在文字**下面** ——
+     视觉系统 §1：「颗粒只落在表面上，文字压在表面上，绝不压在颗粒上」。
+     做法：颗粒是内层的 `::before` 且 `z-index: -1`；内层因此要自己成为一个
+     层叠上下文（isolation: isolate），否则负层级会掉到面板底下，颗粒整个消失。
+     早先的写法是外层的 `::after` —— 伪元素是最后一个子元素，画在文字**上面**，
+     与 §1 的那句「绝不」正好相反。 */
+  .cut-frame__inner.grain {
+    isolation: isolate;
+  }
+
+  .cut-frame__inner.grain::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: var(--layer-grain-opacity);
+  }
+
+  /* ======================================================================
+     金属浮雕 —— 顶部一道极淡的高光，读作「凸起的金属」
+     ====================================================================== */
+
+  .bevel-top::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--color-bevel) 20%,
+      var(--color-bevel) 80%,
+      transparent
+    );
+  }
+
+  /* ======================================================================
+     称号铭牌 —— 斜切的横幅
+     ====================================================================== */
+
+  .nameplate {
+    --np-skew: 12px;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-5) var(--space-2) var(--space-4);
+    background: linear-gradient(
+      180deg,
+      var(--color-surface-panel-raised),
+      var(--color-surface-panel)
+    );
+    border-top: 1px solid var(--color-gold-soft);
+    clip-path: polygon(
+      var(--np-skew) 0,
+      100% 0,
+      calc(100% - var(--np-skew)) 100%,
+      0 100%
+    );
+  }
+
+  .nameplate::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      var(--color-gold-faint),
+      transparent 70%
+    );
+  }
+
+  /* ======================================================================
+     HUD 统计行 —— 点线引线 + 右对齐数值
+     ====================================================================== */
+
+  .hud-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    min-height: 22px;
+  }
+
+  .hud-row__label {
+    flex: none;
+    color: var(--color-fg-secondary);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+  }
+
+  .hud-row__leader {
+    flex: 1 1 auto;
+    min-width: var(--space-4);
+    height: 0;
+    border-bottom: 1px dotted var(--color-hairline);
+    transform: translateY(-3px);
+  }
+
+  .hud-row__value {
+    flex: none;
+    color: var(--color-data-emphasis);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ======================================================================
+     稀有度缎带
+     ====================================================================== */
+
+  .rarity-ribbon {
+    position: relative;
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-2);
+    overflow: hidden;
+    white-space: nowrap;
+    padding: var(--space-1) var(--space-4) var(--space-1) var(--space-3);
+    background: linear-gradient(
+      90deg,
+      var(--rarity-fill, var(--color-gold-faint)),
+      transparent 92%
+    );
+    border-left: 2px solid var(--rarity-edge, var(--color-gold));
+    clip-path: polygon(
+      0 0,
+      100% 0,
+      calc(100% - 8px) 100%,
+      0 100%
+    );
+  }
+
+  .rarity-ribbon__sweep {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 45%;
+    pointer-events: none;
+    background: linear-gradient(
+      100deg,
+      transparent,
+      rgb(255 255 255 / 0.22) 45%,
+      transparent
+    );
+    transform: translateX(-120%);
+  }
+
+  /* ======================================================================
+     角标 —— 面板四角的金色 L 形托架
+     ====================================================================== */
+
+  .corner-brackets::before,
+  .corner-brackets::after {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
+    opacity: var(--layer-bracket-alpha);
+  }
+
+  .corner-brackets::before {
+    top: 6px;
+    left: 6px;
+    border-top: 1px solid var(--color-gold);
+    border-left: 1px solid var(--color-gold);
+  }
+
+  .corner-brackets::after {
+    right: 6px;
+    bottom: 6px;
+    border-right: 1px solid var(--color-gold);
+    border-bottom: 1px solid var(--color-gold);
+  }
+
+  /* ======================================================================
+     计量条 —— 永远朝「稀有」那一端填充，绝不往 0 走
+     ====================================================================== */
+
+  .meter {
+    position: relative;
+    height: 6px;
+    overflow: hidden;
+    background: var(--color-surface-inset);
+    box-shadow: var(--shadow-inset);
+  }
+
+  .meter__fill {
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      var(--meter-from, var(--color-teal)),
+      var(--meter-to, var(--color-gold))
+    );
+    transition: width var(--motion-duration-slow) var(--ease-out);
+  }
+
+  /* ======================================================================
+     文本
+     ====================================================================== */
+
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  /* 中文标题：靠字距承担 Dota 的「宽字距大写」观感，而不是 text-transform。 */
+  .display-cn {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: var(--tracking-wide);
+  }
+
+  .display-caps {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* 未知态：灰色 + 虚线下划线 + `?`。全站统一，绝不改成 0。 */
+  .value-unknown {
+    color: var(--color-state-unknown);
+    text-decoration: underline dashed var(--color-state-unknown);
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+    cursor: help;
+  }
+}
+
+@layer utilities {
+  .noscript-fallback {
+    max-width: 40rem;
+    margin: var(--space-16) auto;
+    padding: var(--space-6);
+    color: var(--color-fg-secondary);
+    text-align: center;
+  }
+}

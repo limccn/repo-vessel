@@ -1,0 +1,49 @@
+<!doctype html>
+<!-- 静态壳用英语：英语是产品的默认语言，也是没有 JavaScript 时唯一说得通的
+       一种。运行之后 `LocaleProvider` 会把 `lang` 换成用户选的语言；`/u/:login`
+       则在服务端按 `?lang=` 改写。 -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0C1211" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <title>Repo Vessel · 码之灵龛</title>
+    <meta
+      name="description"
+      content="Enter a GitHub username to see which public repositories are still asleep, and where their forks drifted."
+    />
+    <meta property="og:title" content="Repo Vessel · 码之灵龛" />
+    <meta property="og:description" content="Repo Vessel · a field guide to sleeping repositories" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Repo Vessel · 码之灵龛" />
+    <!-- 绝对 URL：Open Graph 不接受相对路径，抓取方拿到 `/icon.jpg` 只会显示
+         一张空白卡片。`%SITE_URL%` 由 vite.config.ts 在构建时替换。 -->
+    <meta property="og:url" content="%SITE_URL%/" />
+    <meta property="og:image" content="%SITE_URL%/icon.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1024" />
+    <meta property="og:image:height" content="1024" />
+    <meta
+      property="og:image:alt"
+      content="The Repo Vessel icon: a purple and gold vessel with an Octocat lid and a teal flame"
+    />
+    <!-- 主图标是 1:1 方图：`summary_large_image` 会把它裁成 1.91:1，切掉龛顶
+         与龛底。`summary` 正好按方图展示，不裁。 -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:image" content="%SITE_URL%/icon.jpg" />
+    <meta name="twitter:image:alt" content="Repo Vessel icon" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      <div class="noscript-fallback">
+        Repo Vessel needs JavaScript to run. Without it you can still open public
+        repository pages directly on GitHub.
+      </div>
+    </noscript>
+    <script type="module" src="/src/frontend/main.tsx"></script>
+  </body>
+</html>

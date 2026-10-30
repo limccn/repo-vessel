@@ -1,0 +1,10 @@
+{
+  "note": "OG 图上会出现的全部固定字符（按语言）。由 scripts/build-og-vocabulary.mjs 生成；工具：scripts/build-og-font.mjs / audit-og-font.mjs。改文案后跑 npm run og-vocabulary && npm run og-font。",
+  "asciiPrintable": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~",
+  "locales": {
+    "zh-Hans": "·ⅠⅡⅢⅣ★个主之于人仓余充光初取启天守家封带库想护播收旅时最未沉法流漂灵烬睡知码种等级者能藏装访读轻长阶题龛",
+    "zh-Hant": "·ⅠⅡⅢⅣ★主之人個儲充光初取啟天存守家封帶庫想播收於旅時最未沉法流漂燼睡知碼種等級者能藏裝訪護讀輕長階靈題餘龕",
+    "en": "·ⅠⅡⅢⅣ★",
+    "ja": "·ⅠⅡⅢⅣ★きのりコジチテドマャー不人付休個初取守家封得想手旅日明時最未残流漂火眠着第者蒐蒔装訪軽長開階集霊龕"
+  }
+}

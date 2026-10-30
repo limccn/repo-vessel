@@ -1,0 +1,24 @@
+# Wrangler 本地开发变量。复制成 `.dev.vars` 后按需修改。
+#
+# `.dev.vars` 已被 .gitignore 忽略，永远不会进仓库。
+# 生产环境的 secret 用 `npx wrangler secret put <NAME>` 写入。
+
+# GitHub 主题列表（逗号分隔，任意一个命中即入龛）
+REPO_TOPICS=repo-vessel,urn-of-repos
+
+# GitHub OAuth 登录 —— 作用域只申请 read:user（只读）。
+# 本地开发时 GitHub OAuth App 的 callback 要允许 http://localhost:8787/api/auth/callback
+# （`wrangler dev` 的默认端口；Vite 的 5173 不经过 Worker）。
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+
+# 会话 Cookie 的 HMAC 签名密钥。缺失时登录返回 `?auth=unconfigured`。
+# 生成：node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"
+# 生产用 `npx wrangler secret put SESSION_SECRET` 单独写入，两处**不要**用同一个值。
+SESSION_SECRET=
+
+# 服务端读取 GitHub 公开元数据用的 classic PAT —— **零 scope**。
+# 与上面的 OAuth 登录凭据是两件事。不要用 fine-grained，也不要用 public_repo（含写权限）。
+# 缺失时读取接口返回 `upstream_unavailable`，不回落匿名请求。
+# 生产用 `npx wrangler secret put GITHUB_API_TOKEN --config wrangler.prod.jsonc` 写入。
+GITHUB_API_TOKEN=

@@ -1,0 +1,100 @@
+name: Deploy
+
+# 主分支推送后发布到 Cloudflare Workers（Worker + 静态资源同源）。
+#
+# 站点从 Pages 迁到 Workers 的原因：`/api/*` 需要一个真正的运行时来接，
+# 而 Pages 只能发静态文件。迁完之后 SPA 与接口同一个 origin，不需要 CORS。
+#
+# 真实资源 id 不入库：`wrangler.jsonc` 里的 D1 id 是占位全零，CI 在发布前用
+# `D1_DATABASE_ID` 这个 secret 覆盖它。这样配置只有一份、id 不出现仓库里。
+#
+# 同理，`wrangler.jsonc` 本身是给「Deploy to Cloudflare」按钮用的无域名模板
+# （workers_dev: true，没有 routes）。生产域名与 workers_dev: false 由下面的
+# 发布前步骤注入 —— 按钮那边不知道部署者的域名，写死会把一键部署弄坏。
+#
+# 需要的仓库配置：
+#   secrets.CLOUDFLARE_API_TOKEN   —— 有 Workers:Edit 权限的 API Token
+#   secrets.CLOUDFLARE_ACCOUNT_ID  —— Cloudflare 账号 ID
+#   secrets.D1_DATABASE_ID         —— 生产 D1 的 database id（uuid）
+#
+# Worker 的 secret（GITHUB_CLIENT_SECRET / SESSION_SECRET）不在这里设置：
+# 它们与代码无关，用 `wrangler secret put` 设置一次即可，CI 每次发布不会覆盖。
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: build · publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Point the D1 binding at production and restore the production domain
+        env:
+          D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
+        run: |
+          if [ -z "$D1_DATABASE_ID" ]; then
+            echo "::error::缺少 secrets.D1_DATABASE_ID —— 没有它 wrangler 会用占位 id 发布。"
+            exit 1
+          fi
+          node -e '
+            const fs = require("node:fs");
+            const path = "wrangler.jsonc";
+            const source = fs.readFileSync(path, "utf8");
+
+            const patched = source.replace(
+              "00000000-0000-0000-0000-000000000000",
+              process.env.D1_DATABASE_ID,
+            );
+            if (patched === source) {
+              console.error("占位 database_id 没找到 —— wrangler.jsonc 的结构变了，请同步修改本步骤。");
+              process.exit(1);
+            }
+
+            // 生产只暴露自定义域名：关掉 workers_dev，补上 routes。
+            const template = "\"workers_dev\": true,";
+            if (!patched.includes(template)) {
+              console.error("workers_dev: true 没找到 —— wrangler.jsonc 的结构变了，请同步修改本步骤。");
+              process.exit(1);
+            }
+            const production = patched.replace(
+              template,
+              "\"workers_dev\": false,\n\n  \"routes\": [{ \"pattern\": \"repovessel.lmlh.net\", \"custom_domain\": true }],",
+            );
+
+            fs.writeFileSync(path, production);
+          '
+
+      - name: Publish
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # 不写版本时 action 会装 wrangler@3.90，读不懂 compatibility_date: 2026-10-30
+          # 与 wrangler.jsonc 的 main 字段（报 Missing entry-point）。与本地一致钉 4.156.0。
+          wranglerVersion: "4.156.0"
+          command: deploy

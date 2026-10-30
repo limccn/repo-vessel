@@ -1,0 +1,52 @@
+name: CI
+
+# 门禁：类型、风格、测试、构建 + 设计令牌审计 + OG 字体覆盖审计。
+# 任何一道失败都不允许合并 —— 发布流水线也依赖同一组命令。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: typecheck · lint · test · build · audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
+
+      - name: Build
+        run: npm run build
+
+      - name: Design-token audit
+        run: npm run audit:design
+
+      - name: OG font audit
+        run: npm run audit:og-font

@@ -1,0 +1,80 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "repo-vessel",
+  "compatibility_date": "2026-10-30",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // The Worker script. Without it Wrangler refuses to deploy at all ("Cannot use
+  // assets with a binding in an assets-only Worker") — the /api/* routing in the
+  // assets block below only means something once there is a script to route to.
+  "main": "src/worker/index.ts",
+
+  // No `routes` here on purpose. This file is the fork-friendly template behind the
+  // README's Deploy to Cloudflare button: the button cannot know your domain, and a
+  // `custom_domain` route to a domain the deployer does not own makes `wrangler deploy`
+  // fail outright. The button therefore publishes to the default
+  // `<worker>.<subdomain>.workers.dev` URL.
+  //
+  // Production (repovessel.lmlh.net) adds the route and turns the workers.dev
+  // subdomain off: the maintainer's `wrangler.prod.jsonc` does it locally, and
+  // .github/workflows/deploy.yml injects both values before `wrangler deploy`.
+  "workers_dev": true,
+
+  // The GitHub topics that enrol a repository, comma separated. A repository
+  // carrying EITHER topic counts. The SPA reads the same list from
+  // VITE_REPO_TOPICS; both sides resolve it through src/shared/topic.ts, so the
+  // topics the site advertises and the topics the Worker queries cannot diverge
+  // in shape. The Worker echoes its resolved list in the `x-repo-topics` header.
+  "vars": {
+    "REPO_TOPICS": "repo-vessel,urn-of-repos"
+  },
+
+  // Non-JS assets the Worker imports as modules (see src/worker/share/render.ts).
+  // Neither type is bundled by default: without these rules `wrangler deploy`
+  // fails on the import, which is the only place either one is used.
+  //   .wasm (resvg)   → WebAssembly.Module, passed straight to initWasm()
+  //   .ttf  (OG font) → ArrayBuffer, handed to resvg as a font buffer
+  "rules": [
+    { "type": "CompiledWasm", "globs": ["**/*.wasm"], "fallthrough": true },
+    { "type": "Data", "globs": ["**/*.ttf"], "fallthrough": true }
+  ],
+
+  // The SPA is built by Vite into ./dist and served as static assets.
+  // `not_found_handling: "single-page-application"` makes every unknown path fall back to
+  // index.html so client-side routing works on a hard refresh.
+  // `run_worker_first` keeps these three prefixes on the Worker; everything else is
+  // served from the bundle without ever invoking the script.
+  //   /api/*  — auth + GitHub reads
+  //   /og/*   — the 1200×630 share image (src/worker/share/routes.ts)
+  //   /u/*    — the profile page, whose meta tags are rewritten per user
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/og/*", "/u/*"]
+  },
+
+  // D1 holds the cache, the collected repos, the claims, and the board snapshots.
+  // The real database id lives in the maintainer's uncommitted `wrangler.prod.jsonc`
+  // fork; the placeholder below is for local development only.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "repo-vessel",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  // The collection cron (M3). Every six hours at :17 — off the hour, so the run
+  // does not compete with whatever else fires at 00:00. The handler is the
+  // `scheduled` export in src/worker/index.ts; it discovers topic-carrying repos,
+  // re-verifies the oldest ones, and leaves a resumable cursor in D1.
+  "triggers": {
+    "crons": ["17 */6 * * *"]
+  },
+
+  "observability": {
+    "enabled": true
+  }
+}

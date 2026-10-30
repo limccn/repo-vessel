@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="码之灵龛">
+  <!-- 风格取自 media/icon.jpg：深色底、金色灵龛、猫耳盖、青绿火光、紫色内嵌。
+       16px 下仍有三个可辨的层次：金色轮廓、紫色窗口、青绿火苗。 -->
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F6E4A6" />
+      <stop offset="0.45" stop-color="#D9B54A" />
+      <stop offset="1" stop-color="#8C6A1E" />
+    </linearGradient>
+    <linearGradient id="plum" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4A2E6B" />
+      <stop offset="1" stop-color="#241638" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.55">
+      <stop offset="0" stop-color="#5FE8C8" stop-opacity="0.7" />
+      <stop offset="0.55" stop-color="#3CC9A8" stop-opacity="0.2" />
+      <stop offset="1" stop-color="#3CC9A8" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="14" fill="#0B1010" />
+  <circle cx="32" cy="32" r="25" fill="url(#glow)" />
+
+  <!-- 猫耳盖 -->
+  <path d="M23 18l4.5-5 3.5 5h2l3.5-5 4.5 5z" fill="url(#gold)" />
+  <rect x="19" y="17.5" width="26" height="5" rx="2.5" fill="url(#gold)" />
+
+  <!-- 灵龛主体 -->
+  <path d="M23 25h18v5l-3.5 4v13l4.5 5v3H22v-3l4.5-5V34L23 30z" fill="url(#gold)" />
+
+  <!-- 徽记窗口 -->
+  <path d="M27 34h10v11l-5 4.5-5-4.5z" fill="url(#plum)" />
+
+  <!-- 火苗 -->
+  <path
+    d="M32 36c2 2.2 3 3.9 3 5.7 0 2.1-1.4 3.6-3 3.6s-3-1.5-3-3.6c0-1.8 1-3.5 3-5.7z"
+    fill="#7DF0D8"
+  />
+
+  <!-- 底座 -->
+  <path d="M22 54h20v3H22z" fill="url(#gold)" opacity="0.9" />
+</svg>
